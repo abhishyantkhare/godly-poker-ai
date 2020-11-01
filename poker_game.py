@@ -115,12 +115,13 @@ class PokerRound:
             print(card)
         print("\n")
 
-
     # TODO: implement ties & ties with kickers
+
     def determine_winner(self):
         self.print_board()
         self.print_player_hands()
-        winning_player_idx, winning_hand, winning_value = PokerRound.determine_winner_helper([player.hand for player in self.players_in_round], self)
+        winning_player_idx, winning_hand, winning_value = PokerRound.determine_winner_helper(
+            [player.hand for player in self.players_in_round], self)
         print(f"The winning player is: {self.players_in_round[winning_player_idx]} with hand: {winning_hand}")
         print(f"Hand is: {player.hand}")
         self.print_board()
@@ -139,6 +140,7 @@ class PokerRound:
         winning_hand = poker_utils.PokerHands(winning_hand)
 
         return winning_player_idx, winning_hand, winning_value
+
 
 class PokerGame:
 
@@ -163,6 +165,7 @@ class PokerGame:
         for ai_player in self.ai_players:
             ai_player.position = (ai_player.position + 1) % 7
         self.player.position = (self.player.position + 1) % 7
+
 
 if __name__ == "__main__":
 
