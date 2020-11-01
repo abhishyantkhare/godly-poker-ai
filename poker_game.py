@@ -6,7 +6,6 @@ from poker_enums import PokerAction, PokerPosition, PokerRoundStage
 from poker_player import PokerUserPlayer, PokerAIPlayer
 
 
-
 class PokerRound:
 
     def __init__(self, ai_players, player, big_blind=20):
@@ -20,7 +19,10 @@ class PokerRound:
         self.min_to_raise = 0
         self.pot = 0
         self.board = []
-    
+
+    def get_deck_copy(self):
+        return pydealer.Stack(self.deck.cards)
+
     def set_bets(self, stage):
         for player in self.players_in_round:
             player.set_stage_bet(stage)
@@ -31,7 +33,6 @@ class PokerRound:
             ai.set_hand(hand)
         player_hand = self.deck.deal(2)
         self.player.set_hand(player_hand)
-
 
     def play_round(self):
         self.deal()
@@ -60,7 +61,7 @@ class PokerRound:
             stage_bet_total += player.get_bet()
             print(f"Bet for {player.name}: {player.get_bet()}")
         self.pot += stage_bet_total
-    
+
     def play_stage(self, stage):
         self.set_bets(stage)
         folded_players = []
@@ -84,18 +85,16 @@ class PokerRound:
             if player == last_player:
                 break
             player_ind += 1
-            
 
-
-        self.players_in_round = [player for player in self.players_in_round 
-        if player not in folded_players]
+        self.players_in_round = [player for player in self.players_in_round
+                                 if player not in folded_players]
         self.print_players()
         self.calculate_pot()
         print(f"The pot is: {self.pot}")
 
     def get_player_at_ind(self, i):
         return self.players_in_round[i % len(self.players_in_round)]
-        
+
     def print_players(self):
         print("Players Left:")
         for player in self.players_in_round:
@@ -116,35 +115,39 @@ class PokerRound:
             print(card)
         print("\n")
 
-    #TODO: implement ties & ties with kickers
+
+    # TODO: implement ties & ties with kickers
     def determine_winner(self):
         self.print_board()
         self.print_player_hands()
-        winning_player = self.players_in_round[0]
-        winning_hand, winning_value = poker_utils.get_highest_hand(winning_player.hand, self.board)
-        for player in self.players_in_round:
-            player_hand, player_value = poker_utils.get_highest_hand(player.hand, self.board)
-            if player_hand > winning_hand:
-                winning_player = player
-                winning_hand, winning_value = player_hand, player_value
-            if player_hand == winning_hand and player_value > winning_value:
-                winning_player = player
-                winning_hand, winning_value = player_hand, player_value
-        winning_hand = poker_utils.PokerHands(winning_hand)
-        print(f"The winning player is: {winning_player} with hand: {winning_hand}")
-        print(f"Hand is: {winning_player.hand}")
+        winning_player_idx, winning_hand, winning_value = PokerRound.determine_winner_helper([player.hand for player in self.players_in_round], self)
+        print(f"The winning player is: {self.players_in_round[winning_player_idx]} with hand: {winning_hand}")
+        print(f"Hand is: {player.hand}")
         self.print_board()
 
-    
+    def determine_winner_helper(hands, board):
+        winning_player_idx = 0
+        winning_hand, winning_value = poker_utils.get_highest_hand(hands[0], board)
+        for i in range(len(hands)):
+            player_hand, player_value = poker_utils.get_highest_hand(hands[i], board)
+            if player_hand > winning_hand:
+                winning_player_idx = i
+                winning_hand, winning_value = player_hand, player_value
+            if player_hand == winning_hand and player_value > winning_value:
+                winning_player_idx = i
+                winning_hand, winning_value = player_hand, player_value
+        winning_hand = poker_utils.PokerHands(winning_hand)
+
+        return winning_player_idx, winning_hand, winning_value
 
 class PokerGame:
 
     def __init__(self, big_blind=20):
-        self.num_ai = 6 #TODO: change this from being hardcoded
+        self.num_ai = 6  # TODO: change this from being hardcoded
         self.set_initial_ai()
         self.player = PokerUserPlayer("Player", PokerPosition.BTN)
         self.big_blind = big_blind
-        
+
     def set_initial_ai(self):
         pos = PokerPosition.LB
         self.ai_players = []
@@ -155,15 +158,16 @@ class PokerGame:
     def play_round(self):
         round = PokerRound(self.ai_players, self.player, self.big_blind)
         round.play_round()
-    
+
     def end_round(self):
         for ai_player in self.ai_players:
             ai_player.position = (ai_player.position + 1) % 7
         self.player.position = (self.player.position + 1) % 7
 
-game = PokerGame()
-print("Starting Poker Game: ...\n\n\n")
+if __name__ == "__main__":
 
-game.play_round()
-game.end_round()
-    
+    game = PokerGame()
+    print("Starting Poker Game: ...\n\n\n")
+
+    game.play_round()
+    game.end_round()
